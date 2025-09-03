@@ -1,0 +1,3 @@
+Модальное окно заказа не открылось: assert False
+ +  where False = <bound method OrderFeedPage.is_order_modal_opened of <pages.order_feed_page.OrderFeedPage object at 0x10468e090>>()
+ +    where <bound method OrderFeedPage.is_order_modal_opened of <pages.order_feed_page.OrderFeedPage object at 0x10468e090>> = <pages.order_feed_page.OrderFeedPage object at 0x10468e090>.is_order_modal_opened

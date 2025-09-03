@@ -1,0 +1,4 @@
+Кнопка заказа не найдена. Возможно, нужно добавить ингредиенты в конструктор.
+Заказ не может быть оформлен: assert False
+ +  where False = <bound method MainPage.is_order_modal_opened of <pages.main_page.MainPage object at 0x106015850>>()
+ +    where <bound method MainPage.is_order_modal_opened of <pages.main_page.MainPage object at 0x106015850>> = <pages.main_page.MainPage object at 0x106015850>.is_order_modal_opened
