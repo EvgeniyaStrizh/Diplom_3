@@ -10,7 +10,7 @@ class LoginPage(BasePage):
 
     @allure.step("Открыть страницу входа")
     def open(self):
-        self.driver.get(self.url)
+        self.navigate_to_url(self.url)
 
     @allure.step("Ввести email")
     def enter_email(self, email):

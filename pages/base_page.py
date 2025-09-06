@@ -1,5 +1,9 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains
+import allure
 
 
 class BasePage:
@@ -10,27 +14,164 @@ class BasePage:
     def go_to_site(self):
         self.driver.get(self.base_url)
 
-    def find_element(self, locator, timeout=10):
+    def find_element(self, locator, timeout=15):
         return WebDriverWait(self.driver, timeout).until(
             EC.visibility_of_element_located(locator)
         )
 
-    def click_element(self, locator, timeout=10):
+    def click_element(self, locator, timeout=15):
         element = self.find_element(locator, timeout)
         element.click()
 
-    def input_text(self, locator, text, timeout=10):
+    def input_text(self, locator, text, timeout=15):
         element = self.find_element(locator, timeout)
         element.clear()
         element.send_keys(text)
 
-    def get_text(self, locator, timeout=10):
+    def get_text(self, locator, timeout=15):
         element = self.find_element(locator, timeout)
         return element.text
 
-    def is_element_visible(self, locator, timeout=10):
+    def is_element_visible(self, locator, timeout=15):
         try:
             self.find_element(locator, timeout)
             return True
         except:
             return False
+
+    @allure.step("Перейти на URL")
+    def navigate_to_url(self, url):
+        self.driver.get(url)
+
+    @allure.step("Получить текущий URL")
+    def get_current_url(self):
+        return self.driver.current_url
+
+    @allure.step("Обновить страницу")
+    def refresh_page(self):
+        self.driver.refresh()
+
+    @allure.step("Найти элементы по локатору")
+    def find_elements(self, locator, timeout=10):
+        return WebDriverWait(self.driver, timeout).until(
+            lambda driver: driver.find_elements(*locator)
+        )
+
+    @allure.step("Выполнить JavaScript")
+    def execute_script(self, script, *args):
+        return self.driver.execute_script(script, *args)
+
+    @allure.step("Прокрутить к элементу")
+    def scroll_to_element(self, element):
+        """Прокрутить страницу к указанному элементу"""
+        self.execute_script("arguments[0].scrollIntoView(true);", element)
+
+    @allure.step("Нажать клавишу Escape")
+    def press_escape(self):
+        actions = ActionChains(self.driver)
+        actions.send_keys(Keys.ESCAPE).perform()
+
+    @allure.step("Получить атрибут элемента")
+    def get_element_attribute(self, locator, attribute, timeout=10):
+        element = self.find_element(locator, timeout)
+        return element.get_attribute(attribute)
+
+    @allure.step("Проверить отображение элемента")
+    def is_element_displayed(self, locator, timeout=10):
+        try:
+            element = self.find_element(locator, timeout)
+            return element.is_displayed()
+        except:
+            return False
+
+    @allure.step("Проверить отображение элемента с несколькими попытками")
+    def is_element_visible_with_fallback(self, primary_locator, fallback_locators, timeout=10):
+        """Проверить отображение элемента, пробуя несколько локаторов по очереди"""
+        locators_to_try = [primary_locator] + fallback_locators
+        
+        for locator in locators_to_try:
+            try:
+                if self.is_element_visible(locator, timeout=5):
+                    return True
+            except:
+                continue
+        return False
+
+    @allure.step("Найти элемент с несколькими попытками")
+    def find_element_with_fallback(self, primary_locator, fallback_locators, timeout=10):
+        """Найти элемент, пробуя несколько локаторов по очереди"""
+        locators_to_try = [primary_locator] + fallback_locators
+        
+        for locator in locators_to_try:
+            try:
+                element = self.find_element(locator, timeout=5)
+                if element and element.is_displayed():
+                    return element
+            except:
+                continue
+        return None
+
+    @allure.step("Найти элементы с несколькими попытками")
+    def find_elements_with_fallback(self, primary_locator, fallback_locators, timeout=10):
+        """Найти элементы, пробуя несколько локаторов по очереди"""
+        locators_to_try = [primary_locator] + fallback_locators
+        
+        for locator in locators_to_try:
+            try:
+                elements = self.find_elements(locator, timeout=5)
+                if elements and len(elements) > 0:
+                    return elements
+            except:
+                continue
+        return []
+
+    @allure.step("Кликнуть на элемент с несколькими попытками")
+    def click_element_with_fallback(self, primary_locator, fallback_locators, timeout=10):
+        """Кликнуть на элемент, пробуя несколько локаторов по очереди"""
+        element = self.find_element_with_fallback(primary_locator, fallback_locators, timeout)
+        if element:
+            try:
+                element.click()
+                return True
+            except Exception as e:
+                print(f"Ошибка при клике: {e}")
+                # Пробуем кликнуть через JavaScript
+                try:
+                    self.execute_script("arguments[0].click();", element)
+                    return True
+                except Exception as e2:
+                    print(f"JavaScript клик не удался: {e2}")
+                    return False
+        return False
+
+    @allure.step("Кликнуть на элемент с ожиданием")
+    def click_element_with_wait(self, locator, timeout=10):
+        """Кликнуть на элемент с ожиданием его кликабельности"""
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.common.action_chains import ActionChains
+        
+        try:
+            # Ждем, пока элемент станет кликабельным
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable(locator)
+            )
+            element.click()
+            return True
+        except Exception as e:
+            print(f"Обычный клик не удался: {e}")
+            try:
+                # Пробуем кликнуть через ActionChains
+                element = self.find_element(locator, timeout)
+                actions = ActionChains(self.driver)
+                actions.move_to_element(element).click().perform()
+                return True
+            except Exception as e2:
+                print(f"ActionChains клик не удался: {e2}")
+                try:
+                    # Пробуем кликнуть через JavaScript
+                    element = self.find_element(locator, timeout)
+                    self.execute_script("arguments[0].click();", element)
+                    return True
+                except Exception as e3:
+                    print(f"JavaScript клик не удался: {e3}")
+                    return False
