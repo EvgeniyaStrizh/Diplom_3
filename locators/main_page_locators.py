@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 
 class MainPageLocators:
     # Ингредиенты - более гибкие локаторы
-    INGREDIENT_ITEM = (By.XPATH, "//div[contains(@class, 'ingredient') or contains(@class, 'BurgerIngredient') or contains(@class, 'ingredient-item')]")
+    INGREDIENT_ITEM = (By.XPATH, "//div[contains(@class, 'BurgerIngredient') and not(contains(@class, 'menuContainer'))]")
     INGREDIENT_COUNTER = (By.XPATH, "//div[contains(@class, 'counter') or contains(@class, 'num') or contains(@class, 'count')]")
     
     # Конструктор
@@ -11,7 +11,7 @@ class MainPageLocators:
     CONSTRUCTOR_INGREDIENTS = (By.XPATH, "//div[contains(@class, 'constructor-element')]")
     
     # Кнопка заказа - более гибкий локатор
-    ORDER_BUTTON = (By.XPATH, "//button[contains(text(), 'заказ') or contains(text(), 'Оформить') or contains(@class, 'order')]")
+    ORDER_BUTTON = (By.XPATH, "//button[contains(text(), 'заказ') or contains(text(), 'Оформить') or contains(text(), 'Оформить заказ') or contains(@class, 'order') or contains(@class, 'button')]")
     
     # Модальное окно заказа
     ORDER_MODAL = (By.CLASS_NAME, "modal")

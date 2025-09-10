@@ -18,3 +18,22 @@ class OrderFeedLocators:
     ORDER_MODAL = (By.CLASS_NAME, "modal")
     ORDER_DETAILS = (By.XPATH, "//div[contains(@class, 'order-details')]")
     CLOSE_MODAL_BUTTON = (By.XPATH, "//button[contains(@class, 'close-button')]")
+    
+    # Fallback локаторы для счетчиков
+    TOTAL_ORDERS_FALLBACK = [
+        (By.XPATH, "//p[contains(text(), 'всего') or contains(text(), 'все') or contains(text(), 'total')]"),
+        (By.XPATH, "//span[contains(text(), 'всего') or contains(text(), 'все') or contains(text(), 'total')]"),
+        (By.XPATH, "//div[contains(text(), 'всего') or contains(text(), 'все') or contains(text(), 'total')]")
+    ]
+    
+    TODAY_ORDERS_FALLBACK = [
+        (By.XPATH, "//p[contains(text(), 'сегодня') or contains(text(), 'today')]"),
+        (By.XPATH, "//span[contains(text(), 'сегодня') or contains(text(), 'today')]"),
+        (By.XPATH, "//div[contains(text(), 'сегодня') or contains(text(), 'today')]")
+    ]
+    
+    IN_PROGRESS_ORDERS_FALLBACK = [
+        (By.XPATH, "//div[contains(@class, 'in-progress') or contains(@class, 'progress') or contains(@class, 'работа')]"),
+        (By.XPATH, "//div[contains(text(), 'в работе') or contains(text(), 'готовится') or contains(text(), 'готовится')]"),
+        (By.XPATH, "//div[contains(@class, 'order') and contains(@class, 'active')]")
+    ]

@@ -4,6 +4,7 @@ from pages.main_page import MainPage
 from pages.login_page import LoginPage
 from pages.order_feed_page import OrderFeedPage
 from pages.profile_page import ProfilePage
+from config.test_data import ORDER_INGREDIENTS
 
 @allure.epic("Лента заказов")
 class TestOrderFeed:
@@ -52,22 +53,14 @@ class TestOrderFeed:
                     # Берем первые несколько ингредиентов
                     ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
                     # Добавляем булочку в начало и конец (если есть)
-                    bun_id = ingredient_ids[0] if ingredient_ids else "643d69a5c3f7b9001cfa093c"
+                    bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
                     order_ingredients = [bun_id] + ingredient_ids + [bun_id]
                 else:
                     # Fallback на тестовые ID
-                    order_ingredients = [
-                        "643d69a5c3f7b9001cfa093c",
-                        "643d69a5c3f7b9001cfa0941", 
-                        "643d69a5c3f7b9001cfa093c"
-                    ]
+                    order_ingredients = ORDER_INGREDIENTS
             else:
                 # Fallback на тестовые ID
-                order_ingredients = [
-                    "643d69a5c3f7b9001cfa093c",
-                    "643d69a5c3f7b9001cfa0941", 
-                    "643d69a5c3f7b9001cfa093c"
-                ]
+                order_ingredients = ORDER_INGREDIENTS
             
             # Создаем заказ
             order_response = api_client.create_order(order_ingredients)
@@ -80,8 +73,7 @@ class TestOrderFeed:
         
         with allure.step("Проверить отображение заказа пользователя"):
             # Проверяем, что заказы отображаются в ленте
-            from locators.order_feed_locators import OrderFeedLocators
-            orders = order_feed_page.find_elements(OrderFeedLocators.ORDER_ITEM)
+            orders = order_feed_page.get_orders_list()
             assert len(orders) > 0, "В ленте заказов должны отображаться заказы пользователя"
 
     @allure.feature("Счетчики заказов")
@@ -116,12 +108,12 @@ class TestOrderFeed:
                     ingredients_data = ingredients_response.json()
                     if ingredients_data.get('data'):
                         ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                        bun_id = ingredient_ids[0] if ingredient_ids else "643d69a5c3f7b9001cfa093c"
+                        bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
                         order_ingredients = [bun_id] + ingredient_ids + [bun_id]
                     else:
-                        order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                        order_ingredients = ORDER_INGREDIENTS
                 else:
-                    order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                    order_ingredients = ORDER_INGREDIENTS
                 
                 # Создаем заказ
                 order_response = api_client.create_order(order_ingredients)
@@ -167,12 +159,12 @@ class TestOrderFeed:
                     ingredients_data = ingredients_response.json()
                     if ingredients_data.get('data'):
                         ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                        bun_id = ingredient_ids[0] if ingredient_ids else "643d69a5c3f7b9001cfa093c"
+                        bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
                         order_ingredients = [bun_id] + ingredient_ids + [bun_id]
                     else:
-                        order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                        order_ingredients = ORDER_INGREDIENTS
                 else:
-                    order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                    order_ingredients = ORDER_INGREDIENTS
                 
                 # Создаем заказ
                 order_response = api_client.create_order(order_ingredients)
@@ -213,12 +205,12 @@ class TestOrderFeed:
                 ingredients_data = ingredients_response.json()
                 if ingredients_data.get('data'):
                     ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                    bun_id = ingredient_ids[0] if ingredient_ids else "643d69a5c3f7b9001cfa093c"
+                    bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
                     order_ingredients = [bun_id] + ingredient_ids + [bun_id]
                 else:
-                    order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                    order_ingredients = ORDER_INGREDIENTS
             else:
-                order_ingredients = ["643d69a5c3f7b9001cfa093c", "643d69a5c3f7b9001cfa0941", "643d69a5c3f7b9001cfa093c"]
+                order_ingredients = ORDER_INGREDIENTS
             
             # Создаем заказ
             order_response = api_client.create_order(order_ingredients)

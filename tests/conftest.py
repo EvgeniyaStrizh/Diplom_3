@@ -63,11 +63,8 @@ def driver(request):
     # Делаем скриншот при падении теста
     if hasattr(request.node, 'rep_call') and request.node.rep_call.failed:
         screenshot_path = f"allure-results/screenshot_{request.node.name}.png"
-        try:
-            driver.save_screenshot(screenshot_path)
-            allure.attach.file(screenshot_path, "Screenshot", allure.attachment_type.PNG)
-        except:
-            pass
+        driver.save_screenshot(screenshot_path)
+        allure.attach.file(screenshot_path, "Screenshot", allure.attachment_type.PNG)
     
     driver.quit()
 
@@ -81,32 +78,25 @@ def api_client():
 def registered_user(api_client):
     """Создание тестового пользователя через API"""
     
-    # Генерируем уникальный email
+    # Генерируем уникальные данные пользователя
     random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    random_password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
     user_data = {
         "email": f"test_user_{random_suffix}@example.com",
-        "password": "password123",
+        "password": random_password,
         "name": f"Test User {random_suffix}"
     }
 
-    try:
-        response = api_client.create_user(user_data)
-        if response and response.status_code == 200:
-            yield user_data
-        else:
-            # Если не удалось создать пользователя через API, используем фиктивные данные
-            print(f"Не удалось создать пользователя через API, используем фиктивные данные")
-            yield user_data
-    except Exception as e:
-        # Если произошла ошибка соединения, используем фиктивные данные
-        print(f"Ошибка при создании пользователя: {e}, используем фиктивные данные")
+    response = api_client.create_user(user_data)
+    if response and response.status_code == 200:
         yield user_data
-    finally:
-        # Удаление пользователя после теста
-        try:
-            api_client.delete_user(user_data['email'])
-        except:
-            pass
+    else:
+        # Если не удалось создать пользователя через API, используем фиктивные данные
+        print(f"Не удалось создать пользователя через API, используем фиктивные данные")
+        yield user_data
+    
+    # Удаление пользователя после теста
+    api_client.delete_user(user_data['email'])
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

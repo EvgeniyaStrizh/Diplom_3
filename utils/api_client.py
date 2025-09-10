@@ -19,6 +19,13 @@ class ApiClient:
         """Выполнить запрос с повторными попытками при ошибках соединения"""
         for attempt in range(max_retries):
             try:
+                # Проверяем соединение перед запросом
+                if not self._check_connection():
+                    print(f"Соединение недоступно, попытка {attempt + 1}")
+                    if attempt < max_retries - 1:
+                        self._wait_with_backoff(attempt)
+                        continue
+                
                 response = self.session.request(method, url, **kwargs)
                 return response
             except (ConnectionError, Timeout, RequestException) as e:
@@ -35,9 +42,24 @@ class ApiClient:
                             return self.json_data
                     return MockResponse()
                 else:
-                    print(f"Попытка {attempt + 1} неудачна, повторяем через 2 секунды...")
-                    time.sleep(2)
+                    print(f"Попытка {attempt + 1} неудачна, повторяем через {2 ** attempt} секунд...")
+                    self._wait_with_backoff(attempt)
         return None
+
+    def _check_connection(self):
+        """Проверить доступность соединения"""
+        try:
+            # Быстрая проверка соединения
+            response = self.session.get(f"{self.base_url}/ingredients", timeout=5)
+            return response.status_code in [200, 404, 500]  # Любой ответ означает, что сервер доступен
+        except:
+            return False
+
+    def _wait_with_backoff(self, attempt):
+        """Ожидание с экспоненциальной задержкой"""
+        delay = min(2 ** attempt, 8)  # Максимум 8 секунд
+        print(f"Ожидание {delay} секунд перед повторной попыткой...")
+        time.sleep(delay)
 
     @allure.step("Создать пользователя через API")
     def create_user(self, user_data):

@@ -3,6 +3,7 @@ import allure
 from pages.main_page import MainPage
 from pages.login_page import LoginPage
 from pages.order_feed_page import OrderFeedPage
+from locators.main_page_locators import MainPageLocators
 
 
 @allure.epic("Основной функционал")
@@ -54,14 +55,13 @@ class TestMainFunctionality:
         with allure.step("Проверить открытие модального окна"):
             result = main_page.is_ingredient_modal_opened()
             print(f"Результат проверки модального окна: {result}")
-            # Проверяем, что модальное окно открылось или клик был выполнен
-            assert result is not None, "Модальное окно должно открыться или клик должен быть выполнен"
+            assert result is True, "Модальное окно должно открыться при клике на ингредиент"
 
     @allure.feature("Ингредиенты")
     @allure.story("Всплывающее окно закрывается кликом по крестику")
-    @allure.title("Закрытие модального окна ингредиента")
-    def test_ingredient_modal_closes(self, driver):
-        """Тест закрытия модального окна ингредиента"""
+    @allure.title("Закрытие модального окна ингредиента при успешном открытии")
+    def test_ingredient_modal_closes_when_opened(self, driver):
+        """Тест закрытия модального окна ингредиента при успешном открытии"""
         with allure.step("Открыть главную страницу"):
             main_page = MainPage(driver)
             main_page.open()
@@ -72,18 +72,30 @@ class TestMainFunctionality:
         with allure.step("Проверить открытие модального окна"):
             result = main_page.is_ingredient_modal_opened()
             print(f"Результат проверки модального окна: {result}")
-            if result:
-                # Если модальное окно открылось, проверяем его закрытие
-                with allure.step("Закрыть модальное окно"):
-                    main_page.close_modal()
-                
-                with allure.step("Проверить закрытие модального окна"):
-                    assert main_page.is_modal_closed()
-            else:
-                # Если модальное окно не открылось, проверяем что клик был выполнен
-                # Это может быть особенностью сайта - не все ингредиенты открывают модальные окна
-                print("Модальное окно не открылось, но клик был выполнен - это может быть нормальным поведением")
-                assert result is not None, "Операция проверки модального окна должна быть выполнена"
+            assert result is True, "Модальное окно должно открыться"
+        
+        with allure.step("Закрыть модальное окно"):
+            main_page.close_modal()
+        
+        with allure.step("Проверить закрытие модального окна"):
+            assert main_page.is_modal_closed()
+
+    @allure.feature("Ингредиенты")
+    @allure.story("Проверка клика по ингредиенту")
+    @allure.title("Клик по ингредиенту выполняется корректно")
+    def test_ingredient_click_execution(self, driver):
+        """Тест корректного выполнения клика по ингредиенту"""
+        with allure.step("Открыть главную страницу"):
+            main_page = MainPage(driver)
+            main_page.open()
+        
+        with allure.step("Кликнуть на ингредиент"):
+            main_page.click_ingredient()
+        
+        with allure.step("Проверить выполнение клика"):
+            result = main_page.is_ingredient_modal_opened()
+            print(f"Результат проверки модального окна: {result}")
+            assert result is not None, "Операция проверки модального окна должна быть выполнена"
 
     @allure.feature("Конструктор")
     @allure.story("При добавлении ингредиента увеличивается каунтер")
@@ -98,17 +110,40 @@ class TestMainFunctionality:
             main_page.add_ingredient_to_order()
         
         with allure.step("Проверить увеличение счетчика"):
-            # Проверяем, что счетчик ингредиента увеличился после добавления
             result = main_page.is_ingredient_counter_increased()
-            # Проверяем, что операция добавления была выполнена
-            # Если счетчик увеличился - отлично, если нет - проверяем что операция была выполнена
-            assert result is not None, "Операция проверки счетчика должна быть выполнена"
+            assert result is True, "Счетчик ингредиента должен увеличиться после добавления"
 
     @allure.feature("Заказы")
     @allure.story("Залогиненный пользователь может оформить заказ")
-    @allure.title("Оформление заказа залогиненным пользователем")
-    def test_logged_user_can_place_order(self, driver, registered_user):
-        """Тест оформления заказа залогиненным пользователем"""
+    @allure.title("Успешное оформление заказа залогиненным пользователем")
+    def test_logged_user_successful_order_placement(self, driver, registered_user):
+        """Тест успешного оформления заказа залогиненным пользователем"""
+        with allure.step("Выполнить вход в систему"):
+            login_page = LoginPage(driver)
+            login_page.open()
+            login_page.login(registered_user['email'], registered_user['password'])
+        
+        with allure.step("Открыть главную страницу"):
+            main_page = MainPage(driver)
+            main_page.open()
+        
+        with allure.step("Добавить ингредиент в заказ"):
+            main_page.add_ingredient_to_order()
+        
+        with allure.step("Оформить заказ"):
+            order_placed = main_page.place_order()
+            assert order_placed is True, "Заказ должен быть оформлен успешно"
+        
+        with allure.step("Проверить открытие модального окна заказа"):
+            order_modal_opened = main_page.is_order_modal_opened()
+            print(f"Модальное окно заказа открылось: {order_modal_opened}")
+            assert order_modal_opened is True, "Модальное окно заказа должно открыться"
+
+    @allure.feature("Заказы")
+    @allure.story("Проверка операции оформления заказа")
+    @allure.title("Операция оформления заказа выполняется корректно")
+    def test_order_placement_operation(self, driver, registered_user):
+        """Тест корректного выполнения операции оформления заказа"""
         with allure.step("Выполнить вход в систему"):
             login_page = LoginPage(driver)
             login_page.open()
@@ -123,17 +158,7 @@ class TestMainFunctionality:
         
         with allure.step("Попытаться оформить заказ"):
             order_placed = main_page.place_order()
-            # Проверяем, что операция оформления заказа была выполнена
             assert order_placed is not None, "Операция оформления заказа должна быть выполнена"
-            
-            if order_placed:
-                # Проверяем, что заказ был оформлен успешно
-                order_modal_opened = main_page.is_order_modal_opened()
-                print(f"Модальное окно заказа открылось: {order_modal_opened}")
-                # Проверяем результат операции
-                assert order_modal_opened is not None, "Операция проверки модального окна заказа должна быть выполнена"
-            else:
-                print("Кнопка заказа не найдена - это может быть особенностью сайта")
 
     @allure.feature("Навигация")
     @allure.story("Переход в личный кабинет")

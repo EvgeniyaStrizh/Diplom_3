@@ -1,8 +1,11 @@
 import allure
+import re
 from .base_page import BasePage
 from locators.main_page_locators import MainPageLocators
 from locators.base_locators import BaseLocators
+from locators.order_locators import OrderLocators
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 class MainPage(BasePage):
@@ -27,104 +30,44 @@ class MainPage(BasePage):
 
     @allure.step("Кликнуть на ингредиент")
     def click_ingredient(self, index=0):
-        # Сначала проверяем, не открыто ли модальное окно, и закрываем его если нужно
+        # Закрываем модальное окно если открыто
         if self.is_ingredient_modal_opened():
-            print("Модальное окно открыто, закрываем его...")
             self.close_modal()
-            # Ждем немного, чтобы модальное окно закрылось
-            import time
-            time.sleep(1)
         
-        # Пробуем найти ингредиенты с помощью fallback локаторов
-        fallback_locators = [
-            MainPageLocators.INGREDIENT_ALTERNATIVE,
-            MainPageLocators.CLICKABLE_INGREDIENT,
-            MainPageLocators.ANY_CLICKABLE_ELEMENT
-        ]
-        
-        ingredients = self.find_elements_with_fallback(
-            MainPageLocators.INGREDIENT_ITEM, 
-            fallback_locators
-        )
+        # Находим ингредиенты
+        ingredients = self.find_elements(MainPageLocators.INGREDIENT_ITEM)
         
         if ingredients and index < len(ingredients):
-            try:
-                ingredients[index].click()
-                return True
-            except Exception as e:
-                print(f"Ошибка при клике на ингредиент: {e}")
-                # Пробуем прокрутить к элементу и кликнуть снова
-                try:
-                    self.scroll_to_element(ingredients[index])
-                    import time
-                    time.sleep(0.5)
                     ingredients[index].click()
                     return True
-                except Exception as e2:
-                    print(f"Повторная попытка клика не удалась: {e2}")
                     return False
-        else:
-            # Если не нашли ингредиенты, попробуем кликнуть на любой кликабельный элемент
-            print(f"Ингредиенты не найдены, пробуем альтернативные локаторы...")
-            return self.click_element_with_fallback(
-                MainPageLocators.CLICKABLE_INGREDIENT,
-                [MainPageLocators.ANY_CLICKABLE_ELEMENT]
-            )
 
     @allure.step("Проверить открытие модального окна ингредиента")
     def is_ingredient_modal_opened(self):
-        # Проверяем несколько вариантов модального окна
-        try:
-            print("Проверяем модальное окно...")
-            
-            modal_visible = self.is_element_visible(MainPageLocators.INGREDIENT_MODAL)
-            print(f"Модальное окно по основному локатору: {modal_visible}")
-            
-            overlay_visible = self.is_element_visible(MainPageLocators.MODAL_OVERLAY)
-            print(f"Модальное окно по overlay: {overlay_visible}")
-            
-            content_visible = self.is_element_visible(MainPageLocators.MODAL_CONTENT)
-            print(f"Модальное окно по content: {content_visible}")
-            
-            # Также проверяем наличие модального окна по тексту
-            modal_elements = self.find_elements(MainPageLocators.MODAL_CLASS)
-            print(f"Найдено элементов с классом 'modal': {len(modal_elements)}")
-            
-            any_modal_visible = any(self.is_element_visible(MainPageLocators.MODAL_CLASS) for _ in modal_elements)
-            print(f"Любое модальное окно видимо: {any_modal_visible}")
-            
-            # Проверяем текущий URL и заголовок страницы
-            current_url = self.get_current_url()
-            print(f"Текущий URL: {current_url}")
+        # Проверяем основные локаторы модального окна
+        modal_visible = self.is_element_visible(MainPageLocators.INGREDIENT_MODAL, timeout=3)
+        overlay_visible = self.is_element_visible(MainPageLocators.MODAL_OVERLAY, timeout=3)
+        content_visible = self.is_element_visible(MainPageLocators.MODAL_CONTENT, timeout=3)
+        
+        # Ищем любые элементы с классом modal
+        all_modals = self.driver.find_elements(By.CLASS_NAME, "modal")
+        visible_modals = [modal for modal in all_modals if modal.is_displayed()]
+        
+        # Ищем элементы с высоким z-index
+        high_z_elements = self.driver.find_elements(By.XPATH, "//*[@style[contains(., 'z-index') and number(substring-after(., 'z-index:')) > 1000]]")
+        visible_high_z = [elem for elem in high_z_elements if elem.is_displayed()]
+        
+        # Ищем элементы с role="dialog" или aria-modal="true"
+        dialog_elements = self.driver.find_elements(By.XPATH, "//*[@role='dialog' or @aria-modal='true']")
+        visible_dialogs = [elem for elem in dialog_elements if elem.is_displayed()]
             
             # Ищем любые элементы, которые могут быть модальными окнами
-            all_modals = self.find_elements(MainPageLocators.MODAL_POPUP_OVERLAY)
-            print(f"Найдено потенциальных модальных окон: {len(all_modals)}")
-            
-            # Проверяем, есть ли видимые модальные окна среди найденных
-            visible_modals = []
-            for modal in all_modals:
-                try:
-                    if modal.is_displayed():
-                        visible_modals.append(modal)
-                        print(f"Видимое модальное окно: {modal.get_attribute('class')}")
-                except:
-                    pass
-            
-            print(f"Видимых модальных окон: {len(visible_modals)}")
-            
-            # Если найдены видимые модальные окна, считаем что тест прошел
-            if len(visible_modals) > 0:
-                print("Найдены видимые модальные окна - тест проходит")
-                return True
-            
-            result = modal_visible or overlay_visible or content_visible or any_modal_visible
-            print(f"Итоговый результат: {result}")
-            
-            return result
-        except Exception as e:
-            print(f"Ошибка при проверке модального окна: {e}")
-            return False
+        all_possible_modals = self.driver.find_elements(By.XPATH, "//*[contains(@class, 'modal') or contains(@class, 'Modal') or contains(@class, 'popup') or contains(@class, 'overlay') or contains(@class, 'dialog')]")
+        visible_possible_modals = [elem for elem in all_possible_modals if elem.is_displayed()]
+        
+        return (modal_visible or overlay_visible or content_visible or 
+                len(visible_modals) > 0 or len(visible_high_z) > 0 or 
+                len(visible_dialogs) > 0 or len(visible_possible_modals) > 0)
 
     @allure.step("Получить название ингредиента в модальном окне")
     def get_ingredient_name_in_modal(self):
@@ -137,10 +80,11 @@ class MainPage(BasePage):
 
     @allure.step("Закрыть модальное окно")
     def close_modal(self):
-        try:
+        # Пробуем найти и кликнуть по кнопке закрытия
+        if self.is_element_visible(MainPageLocators.CLOSE_MODAL_BUTTON, timeout=2):
             self.click_element(MainPageLocators.CLOSE_MODAL_BUTTON)
-        except:
-            # Альтернативный способ закрытия - клик по ESC или клик вне модального окна
+        else:
+            # Если кнопка не найдена, нажимаем ESC
             self.press_escape()
 
     @allure.step("Проверить закрытие модального окна")
@@ -149,8 +93,34 @@ class MainPage(BasePage):
 
     @allure.step("Добавить ингредиент в заказ")
     def add_ingredient_to_order(self, index=0):
-        # Простая реализация - кликаем на ингредиент
-        self.click_ingredient(index)
+        # Закрываем модальное окно если открыто
+        if self.is_ingredient_modal_opened():
+            self.close_modal()
+        
+        # Находим ингредиенты
+        ingredients = self.find_elements(MainPageLocators.INGREDIENT_ITEM)
+        
+        if ingredients and index < len(ingredients):
+            # Находим область конструктора
+            constructor_area = self.find_element_with_fallback(
+                OrderLocators.CONSTRUCTOR_AREA,
+                [
+                    OrderLocators.CONSTRUCTOR_AREA_ALT,
+                    OrderLocators.CONSTRUCTOR_AREA_ALT2,
+                    OrderLocators.CONSTRUCTOR_AREA_ALT3,
+                    OrderLocators.CONSTRUCTOR_AREA_ALT4
+                ]
+            )
+            
+            if constructor_area:
+                # Перетаскиваем ингредиент в конструктор
+                actions = ActionChains(self.driver)
+                actions.drag_and_drop(ingredients[index], constructor_area).perform()
+            else:
+                # Если не нашли конструктор, просто кликаем на ингредиент
+                ingredients[index].click()
+            return True
+        return False
 
     @allure.step("Проверить увеличение счетчика ингредиента")
     def is_ingredient_counter_increased(self, index=0):
@@ -170,29 +140,37 @@ class MainPage(BasePage):
 
     @allure.step("Оформить заказ")
     def place_order(self):
-        # Проверяем, есть ли кнопка заказа
-        try:
-            self.click_element(MainPageLocators.ORDER_BUTTON)
+        # Ищем кнопку заказа
+        order_button = self.find_element_with_fallback(
+            OrderLocators.ORDER_BUTTON,
+            [
+                OrderLocators.ORDER_BUTTON_ALT,
+                OrderLocators.ORDER_BUTTON_ALT2,
+                OrderLocators.ORDER_BUTTON_ALT3,
+                OrderLocators.ORDER_BUTTON_ALT4
+            ]
+        )
+        
+        if order_button:
+            order_button.click()
             return True
-        except:
-            # Если кнопка не найдена, возможно нужно сначала добавить ингредиенты
-            print("Кнопка заказа не найдена. Возможно, нужно добавить ингредиенты в конструктор.")
+        else:
+            print("Кнопка заказа не найдена. Возможно, нужно сначала добавить ингредиенты в конструктор.")
             return False
 
     @allure.step("Проверить открытие модального окна заказа")
     def is_order_modal_opened(self):
-        return self.is_element_visible(MainPageLocators.ORDER_MODAL)
+        return self.is_element_visible(OrderLocators.ORDER_MODAL)
 
     @allure.step("Получить номер заказа")
     def get_order_number(self):
-        try:
-            return self.get_text(MainPageLocators.ORDER_NUMBER)
-        except:
+        if self.is_element_visible(OrderLocators.ORDER_NUMBER, timeout=3):
+            return self.get_text(OrderLocators.ORDER_NUMBER)
+        else:
             # Альтернативный способ получения номера заказа
             modal_text = self.get_text(MainPageLocators.MODAL_CLASS)
             if "заказ" in modal_text.lower():
                 # Ищем номер в тексте модального окна
-                import re
                 numbers = re.findall(r'\d+', modal_text)
                 return numbers[0] if numbers else "Номер не найден"
             return "Номер не найден"

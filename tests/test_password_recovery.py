@@ -33,7 +33,8 @@ class TestPasswordRecovery:
             forgot_password_page.open()
         
         with allure.step("Ввести email и нажать кнопку восстановления"):
-            test_email = "test@example.com"
+            import time
+            test_email = f"test_{int(time.time())}@example.com"
             forgot_password_page.restore_password(test_email)
         
         with allure.step("Проверить, что форма отправлена"):

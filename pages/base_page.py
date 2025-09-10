@@ -147,9 +147,6 @@ class BasePage:
     @allure.step("Кликнуть на элемент с ожиданием")
     def click_element_with_wait(self, locator, timeout=10):
         """Кликнуть на элемент с ожиданием его кликабельности"""
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.webdriver.common.action_chains import ActionChains
-        
         try:
             # Ждем, пока элемент станет кликабельным
             element = WebDriverWait(self.driver, timeout).until(
@@ -175,3 +172,64 @@ class BasePage:
                 except Exception as e3:
                     print(f"JavaScript клик не удался: {e3}")
                     return False
+
+    @allure.step("Ожидать исчезновения элемента")
+    def wait_for_element_to_disappear(self, locator, timeout=10):
+        """Ожидать, пока элемент исчезнет со страницы"""
+        try:
+            WebDriverWait(self.driver, timeout).until_not(
+                EC.visibility_of_element_located(locator)
+            )
+            return True
+        except Exception as e:
+            print(f"Элемент не исчез в течение {timeout} секунд: {e}")
+            return False
+
+    @allure.step("Ожидать появления элемента")
+    def wait_for_element_to_appear(self, locator, timeout=10):
+        """Ожидать появления элемента на странице"""
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.visibility_of_element_located(locator)
+            )
+            return True
+        except Exception as e:
+            print(f"Элемент не появился в течение {timeout} секунд: {e}")
+            return False
+
+    @allure.step("Ожидать кликабельности элемента")
+    def wait_for_element_to_be_clickable(self, locator, timeout=10):
+        """Ожидать, пока элемент станет кликабельным"""
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable(locator)
+            )
+            return True
+        except Exception as e:
+            print(f"Элемент не стал кликабельным в течение {timeout} секунд: {e}")
+            return False
+
+    @allure.step("Ожидать загрузки страницы")
+    def wait_for_page_load(self, timeout=10):
+        """Ожидать полной загрузки страницы"""
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: driver.execute_script("return document.readyState") == "complete"
+            )
+            return True
+        except Exception as e:
+            print(f"Страница не загрузилась в течение {timeout} секунд: {e}")
+            return False
+
+    @allure.step("Ожидать после прокрутки")
+    def wait_after_scroll(self, element, timeout=2):
+        """Ожидать стабилизации после прокрутки к элементу"""
+        try:
+            # Ждем, пока элемент станет видимым после прокрутки
+            WebDriverWait(self.driver, timeout).until(
+                lambda driver: element.is_displayed() and element.is_enabled()
+            )
+            return True
+        except Exception as e:
+            print(f"Элемент не стабилизировался после прокрутки: {e}")
+            return False
