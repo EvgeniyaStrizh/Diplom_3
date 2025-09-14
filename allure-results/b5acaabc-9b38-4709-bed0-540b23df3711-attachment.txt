@@ -1,0 +1,24 @@
+Счетчики заказов не найдены: Message: 
+Stacktrace:
+0   chromedriver                        0x000000010ee15668 chromedriver + 5928552
+1   chromedriver                        0x000000010ee0cc0a chromedriver + 5893130
+2   chromedriver                        0x000000010e8d6e00 chromedriver + 429568
+3   chromedriver                        0x000000010e928ff4 chromedriver + 765940
+4   chromedriver                        0x000000010e929211 chromedriver + 766481
+5   chromedriver                        0x000000010e978e94 chromedriver + 1093268
+6   chromedriver                        0x000000010e94f08d chromedriver + 921741
+7   chromedriver                        0x000000010e9761d4 chromedriver + 1081812
+8   chromedriver                        0x000000010e94ee33 chromedriver + 921139
+9   chromedriver                        0x000000010e91b37b chromedriver + 709499
+10  chromedriver                        0x000000010e91c061 chromedriver + 712801
+11  chromedriver                        0x000000010edd30e0 chromedriver + 5656800
+12  chromedriver                        0x000000010edd6fa4 chromedriver + 5672868
+13  chromedriver                        0x000000010edae052 chromedriver + 5505106
+14  chromedriver                        0x000000010edd7a4f chromedriver + 5675599
+15  chromedriver                        0x000000010ed9d004 chromedriver + 5435396
+16  chromedriver                        0x000000010edf9d88 chromedriver + 5815688
+17  chromedriver                        0x000000010edf9f50 chromedriver + 5816144
+18  chromedriver                        0x000000010ee0c7e1 chromedriver + 5892065
+19  libsystem_pthread.dylib             0x00007ff80129518b _pthread_start + 99
+20  libsystem_pthread.dylib             0x00007ff801290ae3 thread_start + 15
+

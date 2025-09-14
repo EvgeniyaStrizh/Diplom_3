@@ -1,0 +1,24 @@
+Выход из аккаунта не удался: Message: 
+Stacktrace:
+0   chromedriver                        0x000000010364e668 chromedriver + 5928552
+1   chromedriver                        0x0000000103645c0a chromedriver + 5893130
+2   chromedriver                        0x000000010310fe00 chromedriver + 429568
+3   chromedriver                        0x0000000103161ff4 chromedriver + 765940
+4   chromedriver                        0x0000000103162211 chromedriver + 766481
+5   chromedriver                        0x00000001031b1e94 chromedriver + 1093268
+6   chromedriver                        0x000000010318808d chromedriver + 921741
+7   chromedriver                        0x00000001031af1d4 chromedriver + 1081812
+8   chromedriver                        0x0000000103187e33 chromedriver + 921139
+9   chromedriver                        0x000000010315437b chromedriver + 709499
+10  chromedriver                        0x0000000103155061 chromedriver + 712801
+11  chromedriver                        0x000000010360c0e0 chromedriver + 5656800
+12  chromedriver                        0x000000010360ffa4 chromedriver + 5672868
+13  chromedriver                        0x00000001035e7052 chromedriver + 5505106
+14  chromedriver                        0x0000000103610a4f chromedriver + 5675599
+15  chromedriver                        0x00000001035d6004 chromedriver + 5435396
+16  chromedriver                        0x0000000103632d88 chromedriver + 5815688
+17  chromedriver                        0x0000000103632f50 chromedriver + 5816144
+18  chromedriver                        0x00000001036457e1 chromedriver + 5892065
+19  libsystem_pthread.dylib             0x00007ff80129518b _pthread_start + 99
+20  libsystem_pthread.dylib             0x00007ff801290ae3 thread_start + 15
+

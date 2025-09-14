@@ -1,0 +1,3 @@
+Клик по заказу не удался: assert False
+ +  where False = <bound method OrderFeedPage.is_order_modal_opened of <pages.order_feed_page.OrderFeedPage object at 0x10618d730>>()
+ +    where <bound method OrderFeedPage.is_order_modal_opened of <pages.order_feed_page.OrderFeedPage object at 0x10618d730>> = <pages.order_feed_page.OrderFeedPage object at 0x10618d730>.is_order_modal_opened

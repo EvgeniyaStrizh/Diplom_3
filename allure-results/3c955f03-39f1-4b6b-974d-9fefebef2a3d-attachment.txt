@@ -1,0 +1,3 @@
+Заказ не может быть оформлен: assert False
+ +  where False = <bound method MainPage.is_order_modal_opened of <pages.main_page.MainPage object at 0x103178500>>()
+ +    where <bound method MainPage.is_order_modal_opened of <pages.main_page.MainPage object at 0x103178500>> = <pages.main_page.MainPage object at 0x103178500>.is_order_modal_opened
