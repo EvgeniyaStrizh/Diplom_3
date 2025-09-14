@@ -8,6 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from utils.api_client import ApiClient
+from config.test_data import ORDER_INGREDIENTS
 
 
 def pytest_addoption(parser):
@@ -89,14 +90,63 @@ def registered_user(api_client):
 
     response = api_client.create_user(user_data)
     if response and response.status_code == 200:
-        yield user_data
+        print(f"Пользователь успешно создан через API: {user_data['email']}")
+        user_created = True
     else:
-        # Если не удалось создать пользователя через API, используем фиктивные данные
-        print(f"Не удалось создать пользователя через API, используем фиктивные данные")
-        yield user_data
+        # Если не удалось создать пользователя через API, помечаем это
+        print(f"Не удалось создать пользователя через API, но продолжаем тест с фиктивными данными")
+        user_created = False
     
-    # Удаление пользователя после теста
-    api_client.delete_user(user_data['email'])
+    # Добавляем флаг о том, был ли пользователь создан через API
+    user_data['api_created'] = user_created
+    yield user_data
+    
+    # Удаление пользователя после теста (только если он был создан через API)
+    if user_data.get('api_created', False):
+        api_client.delete_user(user_data['email'])
+
+
+@pytest.fixture(scope="function")
+def created_order(api_client, registered_user):
+    """Создание заказа через API"""
+    # Авторизуемся через API
+    login_response = api_client.login_user({
+        "email": registered_user['email'],
+        "password": registered_user['password']
+    })
+    
+    if login_response.status_code != 200:
+        print(f"Не удалось авторизоваться через API для создания заказа")
+        return None
+    
+    # Получаем реальные ингредиенты из API
+    ingredients_response = api_client.get_ingredients()
+    if ingredients_response.status_code == 200:
+        ingredients_data = ingredients_response.json()
+        if ingredients_data.get('data'):
+            # Берем первые несколько ингредиентов
+            ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
+            # Добавляем булочку в начало и конец (если есть)
+            bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
+            order_ingredients = [bun_id] + ingredient_ids + [bun_id]
+        else:
+            # Fallback на тестовые ID
+            order_ingredients = ORDER_INGREDIENTS
+    else:
+        # Fallback на тестовые ID
+        order_ingredients = ORDER_INGREDIENTS
+    
+    # Создаем заказ
+    order_response = api_client.create_order(order_ingredients)
+    if order_response.status_code in [200, 400, 403]:
+        return {
+            'response': order_response,
+            'ingredients': order_ingredients,
+            'user': registered_user
+        }
+    else:
+        print(f"Неожиданный статус код при создании заказа: {order_response.status_code}")
+        return None
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

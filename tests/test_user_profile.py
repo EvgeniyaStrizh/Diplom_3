@@ -3,6 +3,7 @@ import allure
 from pages.main_page import MainPage
 from pages.login_page import LoginPage
 from pages.profile_page import ProfilePage
+from pages.order_feed_page import OrderFeedPage
 
 
 @allure.epic("Личный кабинет")
@@ -101,7 +102,6 @@ class TestUserProfile:
         with allure.step("Перейти в ленту заказов"):
             profile_page.go_to_order_feed()
             # Проверяем, что переход произошел
-            from pages.order_feed_page import OrderFeedPage
             order_feed_page = OrderFeedPage(driver)
             current_url = order_feed_page.get_current_url()
             assert current_url is not None

@@ -5,6 +5,7 @@ from pages.login_page import LoginPage
 from pages.order_feed_page import OrderFeedPage
 from pages.profile_page import ProfilePage
 from config.test_data import ORDER_INGREDIENTS
+from utils.api_client import ApiClient
 
 @allure.epic("Лента заказов")
 class TestOrderFeed:
@@ -27,45 +28,16 @@ class TestOrderFeed:
     @allure.feature("История заказов")
     @allure.story("Заказы пользователя отображаются в ленте заказов")
     @allure.title("Отображение заказов пользователя в ленте заказов")
-    def test_user_orders_displayed_in_feed(self, driver, registered_user):
+    def test_user_orders_displayed_in_feed(self, driver, registered_user, created_order):
         """Тест отображения заказов пользователя в ленте заказов"""
         with allure.step("Выполнить вход в систему"):
             login_page = LoginPage(driver)
             login_page.open()
             login_page.login(registered_user['email'], registered_user['password'])
         
-        with allure.step("Создать заказ через API"):
-            # Создаем заказ через API с реальными ингредиентами
-            from utils.api_client import ApiClient
-            api_client = ApiClient()
-            # Авторизуемся через API
-            login_response = api_client.login_user({
-                "email": registered_user['email'],
-                "password": registered_user['password']
-            })
-            assert login_response.status_code == 200
-            
-            # Получаем реальные ингредиенты из API
-            ingredients_response = api_client.get_ingredients()
-            if ingredients_response.status_code == 200:
-                ingredients_data = ingredients_response.json()
-                if ingredients_data.get('data'):
-                    # Берем первые несколько ингредиентов
-                    ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                    # Добавляем булочку в начало и конец (если есть)
-                    bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
-                    order_ingredients = [bun_id] + ingredient_ids + [bun_id]
-                else:
-                    # Fallback на тестовые ID
-                    order_ingredients = ORDER_INGREDIENTS
-            else:
-                # Fallback на тестовые ID
-                order_ingredients = ORDER_INGREDIENTS
-            
-            # Создаем заказ
-            order_response = api_client.create_order(order_ingredients)
-            # Проверяем, что заказ создан или получили разумную ошибку
-            assert order_response.status_code in [200, 400, 403], f"Unexpected status code: {order_response.status_code}"
+        with allure.step("Проверить, что заказ был создан"):
+            assert created_order is not None, "Заказ должен быть создан через фикстуру"
+            assert created_order['response'].status_code in [200, 400, 403], f"Неожиданный статус код: {created_order['response'].status_code}"
         
         with allure.step("Открыть страницу ленты заказов"):
             order_feed_page = OrderFeedPage(driver)
@@ -79,7 +51,7 @@ class TestOrderFeed:
     @allure.feature("Счетчики заказов")
     @allure.story("При создании нового заказа увеличивается счетчик 'Выполнено за все время'")
     @allure.title("Увеличение общего счетчика заказов при создании нового заказа")
-    def test_total_orders_counter_increases(self, driver, registered_user):
+    def test_total_orders_counter_increases(self, driver, registered_user, created_order):
         """Тест увеличения общего счетчика заказов"""
         with allure.step("Выполнить вход в систему"):
             login_page = LoginPage(driver)
@@ -91,34 +63,9 @@ class TestOrderFeed:
             order_feed_page.open()
             initial_total = order_feed_page.get_total_orders_count()
             
-            with allure.step("Создать новый заказ"):
-                # Создаем заказ через API
-                from utils.api_client import ApiClient
-                api_client = ApiClient()
-                # Авторизуемся через API
-                login_response = api_client.login_user({
-                    "email": registered_user['email'],
-                    "password": registered_user['password']
-                })
-                assert login_response.status_code == 200
-                
-                # Получаем реальные ингредиенты из API
-                ingredients_response = api_client.get_ingredients()
-                if ingredients_response.status_code == 200:
-                    ingredients_data = ingredients_response.json()
-                    if ingredients_data.get('data'):
-                        ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                        bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
-                        order_ingredients = [bun_id] + ingredient_ids + [bun_id]
-                    else:
-                        order_ingredients = ORDER_INGREDIENTS
-                else:
-                    order_ingredients = ORDER_INGREDIENTS
-                
-                # Создаем заказ
-                order_response = api_client.create_order(order_ingredients)
-                # Проверяем, что заказ создан или получили разумную ошибку
-                assert order_response.status_code in [200, 400, 403], f"Unexpected status code: {order_response.status_code}"
+            with allure.step("Проверить, что заказ был создан"):
+                assert created_order is not None, "Заказ должен быть создан через фикстуру"
+                assert created_order['response'].status_code in [200, 400, 403], f"Неожиданный статус код: {created_order['response'].status_code}"
             
             with allure.step("Проверить увеличение счетчика"):
                 # Обновить страницу и проверить новый счетчик
@@ -130,7 +77,7 @@ class TestOrderFeed:
     @allure.feature("Счетчики заказов")
     @allure.story("При создании нового заказа увеличивается счетчик 'Выполнено за сегодня'")
     @allure.title("Увеличение счетчика заказов за сегодня при создании нового заказа")
-    def test_today_orders_counter_increases(self, driver, registered_user):
+    def test_today_orders_counter_increases(self, driver, registered_user, created_order):
         """Тест увеличения счетчика заказов за сегодня"""
         with allure.step("Выполнить вход в систему"):
             login_page = LoginPage(driver)
@@ -142,34 +89,9 @@ class TestOrderFeed:
             order_feed_page.open()
             initial_today = order_feed_page.get_today_orders_count()
             
-            with allure.step("Создать новый заказ"):
-                # Создаем заказ через API
-                from utils.api_client import ApiClient
-                api_client = ApiClient()
-                # Авторизуемся через API
-                login_response = api_client.login_user({
-                    "email": registered_user['email'],
-                    "password": registered_user['password']
-                })
-                assert login_response.status_code == 200
-                
-                # Получаем реальные ингредиенты из API
-                ingredients_response = api_client.get_ingredients()
-                if ingredients_response.status_code == 200:
-                    ingredients_data = ingredients_response.json()
-                    if ingredients_data.get('data'):
-                        ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                        bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
-                        order_ingredients = [bun_id] + ingredient_ids + [bun_id]
-                    else:
-                        order_ingredients = ORDER_INGREDIENTS
-                else:
-                    order_ingredients = ORDER_INGREDIENTS
-                
-                # Создаем заказ
-                order_response = api_client.create_order(order_ingredients)
-                # Проверяем, что заказ создан или получили разумную ошибку
-                assert order_response.status_code in [200, 400, 403], f"Unexpected status code: {order_response.status_code}"
+            with allure.step("Проверить, что заказ был создан"):
+                assert created_order is not None, "Заказ должен быть создан через фикстуру"
+                assert created_order['response'].status_code in [200, 400, 403], f"Неожиданный статус код: {created_order['response'].status_code}"
             
             with allure.step("Проверить увеличение счетчика за сегодня"):
                 # Обновить страницу и проверить новый счетчик
@@ -181,41 +103,16 @@ class TestOrderFeed:
     @allure.feature("Статус заказов")
     @allure.story("После оформления заказа его номер появляется в разделе 'В работе'")
     @allure.title("Появление заказа в разделе 'В работе' после оформления")
-    def test_order_appears_in_progress(self, driver, registered_user):
+    def test_order_appears_in_progress(self, driver, registered_user, created_order):
         """Тест появления заказа в разделе 'В работе'"""
         with allure.step("Выполнить вход в систему"):
             login_page = LoginPage(driver)
             login_page.open()
             login_page.login(registered_user['email'], registered_user['password'])
         
-        with allure.step("Создать заказ"):
-            # Создаем заказ через API
-            from utils.api_client import ApiClient
-            api_client = ApiClient()
-            # Авторизуемся через API
-            login_response = api_client.login_user({
-                "email": registered_user['email'],
-                "password": registered_user['password']
-            })
-            assert login_response.status_code == 200
-            
-            # Получаем реальные ингредиенты из API
-            ingredients_response = api_client.get_ingredients()
-            if ingredients_response.status_code == 200:
-                ingredients_data = ingredients_response.json()
-                if ingredients_data.get('data'):
-                    ingredient_ids = [ing['_id'] for ing in ingredients_data['data'][:3]]
-                    bun_id = ingredient_ids[0] if ingredient_ids else ORDER_INGREDIENTS[0]
-                    order_ingredients = [bun_id] + ingredient_ids + [bun_id]
-                else:
-                    order_ingredients = ORDER_INGREDIENTS
-            else:
-                order_ingredients = ORDER_INGREDIENTS
-            
-            # Создаем заказ
-            order_response = api_client.create_order(order_ingredients)
-            # Проверяем, что заказ создан или получили разумную ошибку
-            assert order_response.status_code in [200, 400, 403], f"Unexpected status code: {order_response.status_code}"
+        with allure.step("Проверить, что заказ был создан"):
+            assert created_order is not None, "Заказ должен быть создан через фикстуру"
+            assert created_order['response'].status_code in [200, 400, 403], f"Неожиданный статус код: {created_order['response'].status_code}"
         
         with allure.step("Открыть страницу ленты заказов"):
             order_feed_page = OrderFeedPage(driver)
@@ -253,14 +150,13 @@ class TestOrderFeed:
         with allure.step("Кликнуть на заказ"):
             order_feed_page.click_order()
             
-            with allure.step("Проверить открытие модального окна"):
-                modal_opened = order_feed_page.is_order_modal_opened()
-                assert modal_opened is not None
+        with allure.step("Проверить открытие модального окна"):
+            modal_opened = order_feed_page.is_order_modal_opened()
+            assert modal_opened, "Модальное окно должно открыться после клика на заказ"
             
-            if modal_opened:
-                with allure.step("Закрыть модальное окно"):
-                    order_feed_page.close_order_modal()
-                
-                with allure.step("Проверить закрытие модального окна"):
-                    # Модальное окно должно быть закрыто
-                    assert not order_feed_page.is_order_modal_opened()
+        with allure.step("Закрыть модальное окно"):
+            order_feed_page.close_order_modal()
+            
+        with allure.step("Проверить закрытие модального окна"):
+            # Модальное окно должно быть закрыто
+            assert not order_feed_page.is_order_modal_opened(), "Модальное окно должно быть закрыто"
